@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注释格式转换器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #e94560;
+            font-size: 28px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* 模式选择 */
+        .mode-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 10px 24px;
+            border: 2px solid #533483;
+            background: transparent;
+            color: #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            border-color: #e94560;
+            color: #e94560;
+        }
+
+        .mode-btn.active {
+            background: #e94560;
+            border-color: #e94560;
+            color: #fff;
+        }
+
+        /* 输入区 */
+        .input-section {
+            margin-bottom: 24px;
+        }
+
+        .input-section label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        textarea {
+            flex: 1;
+            height: 120px;
+            padding: 12px;
+            background: #16213e;
+            border: 2px solid #533483;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 14px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            border-color: #e94560;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #e94560;
+            color: #fff;
+            align-self: flex-end;
+        }
+
+        .btn-primary:hover {
+            background: #c73650;
+        }
+
+        .btn-add {
+            background: #533483;
+            color: #fff;
+            margin-top: 10px;
+        }
+
+        .btn-add:hover {
+            background: #6a42a0;
+        }
+
+        .btn-copy {
+            background: #0f3460;
+            color: #fff;
+        }
+
+        .btn-copy:hover {
+            background: #154785;
+        }
+
+        .btn-clear {
+            background: #333;
+            color: #ccc;
+        }
+
+        .btn-clear:hover {
+            background: #444;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* 条目列表 */
+        .items-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .items-header h2 {
+            font-size: 18px;
+            color: #e94560;
+        }
+
+        .item-count {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #16213e;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            padding: 10px 14px;
+            transition: all 0.2s;
+        }
+
+        .item-row:hover {
+            border-color: #533483;
+        }
+
+        .item-index {
+            color: #666;
+            font-size: 12px;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        .item-original {
+            flex: 1;
+            font-size: 14px;
+            color: #aaa;
+            word-break: break-all;
+        }
+
+        .item-arrow {
+            color: #533483;
+            font-size: 16px;
+            margin: 0 4px;
+        }
+
+        .item-result {
+            flex: 1.5;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            color: #7ec8e3;
+            word-break: break-all;
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: 1px solid #444;
+            color: #888;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-delete:hover {
+            border-color: #e94560;
+            color: #e94560;
+            background: rgba(233, 69, 96, 0.1);
+        }
+
+        /* 新条目输入 */
+        .add-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .add-input {
+            flex: 1;
+            padding: 10px 14px;
+            background: #16213e;
+            border: 2px solid #533483;
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 14px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .add-input:focus {
+            border-color: #e94560;
+        }
+
+        /* 输出区 */
+        .output-section {
+            margin-top: 20px;
+        }
+
+        .output-section label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .output-box {
+            width: 100%;
+            min-height: 100px;
+            padding: 14px;
+            background: #0a0a1a;
+            border: 2px solid #2a2a4a;
+            border-radius: 8px;
+            color: #7ec8e3;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.8;
+        }
+
+        .empty-hint {
+            text-align: center;
+            padding: 40px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #533483;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>💬 注释格式转换器</h1>
+
+    <!-- 模式选择 -->
+    <div class="mode-selector">
+        <button class="mode-btn active" data-mode="block" onclick="setMode('block', this)">/* 文本 */</button>
+        <button class="mode-btn" data-mode="line" onclick="setMode('line', this)">// 文本</button>
+        <button class="mode-btn" data-mode="html" onclick="setMode('html', this)">&lt;!-- 文本 --&gt;</button>
+    </div>
+
+    <!-- 批量输入区 -->
+    <div class="input-section">
+        <label>粘贴或输入文本（支持多行，每行将成为独立条目）：</label>
+        <div class="input-row">
+            <textarea id="bulkInput" placeholder="在此输入文本...&#10;每一行会转化为一个独立的注释条目&#10;例如这三行会变成三条注释"></textarea>
+        </div>
+        <div class="action-bar">
+            <button class="btn btn-primary" onclick="addBulk()">转换并添加</button>
+            <button class="btn btn-clear" onclick="clearAll()">清空所有条目</button>
+        </div>
+    </div>
+
+    <!-- 单条追加 -->
+    <div class="add-section">
+        <input type="text" class="add-input" id="singleInput" placeholder="追加单条内容，按 Enter 添加..." onkeydown="if(event.key==='Enter') addSingle()">
+        <button class="btn btn-add" onclick="addSingle()">+ 追加</button>
+    </div>
+
+    <!-- 条目列表 -->
+    <div class="items-header">
+        <h2>条目列表</h2>
+        <span class="item-count" id="itemCount">共 0 条</span>
+    </div>
+    <div class="items-list" id="itemsList">
+        <div class="empty-hint">暂无条目，请在上方输入文本后点击"转换并添加"</div>
+    </div>
+
+    <!-- 输出区 -->
+    <div class="output-section">
+        <label>合并输出（可直接复制）：</label>
+        <div class="output-box" id="outputBox">暂无内容</div>
+        <div class="action-bar" style="margin-top: 10px;">
+            <button class="btn btn-copy" onclick="copyOutput()">📋 复制全部输出</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+    let currentMode = 'block';
+    let items = []; // 存储原文字符串数组
+
+    function setMode(mode, btnEl) {
+        currentMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+        renderAll();
+    }
+
+    function toComment(text) {
+        switch (currentMode) {
+            case 'block': return '/* ' + text + ' */';
+            case 'line':  return '// ' + text;
+            case 'html':  return '<!-- ' + text + ' -->';
+        }
+    }
+
+    function addBulk() {
+        const raw = document.getElementById('bulkInput').value;
+        if (!raw.trim()) {
+            showToast('输入为空');
+            return;
+        }
+        const lines = raw.split('\n').filter(l => l.trim() !== '');
+        lines.forEach(l => items.push(l.trim()));
+        document.getElementById('bulkInput').value = '';
+        renderAll();
+        showToast('已添加 ' + lines.length + ' 条');
+    }
+
+    function addSingle() {
+        const input = document.getElementById('singleInput');
+        const text = input.value.trim();
+        if (!text) {
+            showToast('输入为空');
+            return;
+        }
+        items.push(text);
+        input.value = '';
+        renderAll();
+        showToast('已追加 1 条');
+    }
+
+    function deleteItem(index) {
+        items.splice(index, 1);
+        renderAll();
+    }
+
+    function clearAll() {
+        if (items.length === 0) return;
+        items = [];
+        renderAll();
+        showToast('已清空');
+    }
+
+    function renderAll() {
+        const list = document.getElementById('itemsList');
+        const countEl = document.getElementById('itemCount');
+        const outputBox = document.getElementById('outputBox');
+
+        countEl.textContent = '共 ' + items.length + ' 条';
+
+        if (items.length === 0) {
+            list.innerHTML = '<div class="empty-hint">暂无条目，请在上方输入文本后点击"转换并添加"</div>';
+            outputBox.textContent = '暂无内容';
+            return;
+        }
+
+        let html = '';
+        let outputLines = [];
+
+        items.forEach((text, i) => {
+            const commented = toComment(text);
+            outputLines.push(commented);
+
+            // 对 HTML 显示做转义
+            const escOriginal = escapeHtml(text);
+            const escResult = escapeHtml(commented);
+
+            html += `
+                <div class="item-row">
+                    <span class="item-index">#${i + 1}</span>
+                    <span class="item-original">${escOriginal}</span>
+                    <span class="item-arrow">→</span>
+                    <span class="item-result">${escResult}</span>
+                    <button class="btn-delete" title="删除此条" onclick="deleteItem(${i})">✕</button>
+                </div>
+            `;
+        });
+
+        list.innerHTML = html;
+        outputBox.textContent = outputLines.join('\n');
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function copyOutput() {
+        const text = document.getElementById('outputBox').textContent;
+        if (!text || text === '暂无内容') {
+            showToast('没有可复制的内容');
+            return;
+        }
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('已复制到剪贴板 ✓');
+        }).catch(() => {
+            // fallback
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('已复制到剪贴板 ✓');
+        });
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+</script>
+
+</body>
+</html>
